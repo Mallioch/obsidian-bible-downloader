@@ -16,10 +16,7 @@ export default class NetBibleApi implements DataSource {
 
 		const data: Array<ApiDataObject> = await response.json();
 
-		let contents = `---
-bible-version: NET
----
-`;
+		let contents = '';
 		data.forEach((v: ApiDataObject) => {
 			contents += '###### ' + v.verse + '\n';
 			contents += v.text.trim() + '\n';

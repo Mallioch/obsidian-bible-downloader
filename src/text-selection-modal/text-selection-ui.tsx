@@ -1,47 +1,11 @@
 import React, { useState } from 'react';
 import SelectSetting from 'src/components/select-setting';
 import SelectOption from 'src/components/select-option';
-import { Notice, App } from 'obsidian';
-import { DataFetcher } from 'src/data-fetcher';
-import BibleChapterDownloaderPlugin from '../../main';
+import { App } from 'obsidian';
 import { BibleChapterDownloaderSettings } from 'src/settings/bible-chapter-downloader-settings';
 import { AVAILABLE_TRANSLATIONS } from '../available-translations';
 import GetBookData from '../book-data';
-
-export class TextSelectionResult {
-    bookId: number
-    bookAbbreviation: string
-    chapterNumber: number
-	translation: string
-}
-
-const callbackFunc = async (a: TextSelectionResult, settings: BibleChapterDownloaderSettings, app: App) => {
-    const fileContents = await DataFetcher.getBook(a.translation, a.bookId, a.chapterNumber)
-
-    const folderPath = `${settings.fileLocation}/${a.translation}/${a.bookAbbreviation}`;	
-    const folderExists = await app.vault.adapter.exists(folderPath);
-
-    if (!folderExists) {
-        await app.vault.createFolder(folderPath)
-        new Notice(`Created folder '${folderPath}'.`);
-    }
-
-    let filePath = `${folderPath}/${a.bookAbbreviation} ${a.chapterNumber}.md`;
-    if (a.translation !== settings.defaultTranslation && '' !== settings.defaultTranslation) {
-        filePath = `${folderPath}/${a.translation} ${a.bookAbbreviation} ${a.chapterNumber}.md`;
-    }
-    const fileExists = await app.vault.adapter.exists(filePath);
-
-    if (fileExists) {
-        new Notice(`File '${folderPath}' has already been downloaded.`);
-    }
-    else {
-        const fileCreateResult = await app.vault.create(filePath, fileContents);
-        new Notice(`Created file '${filePath}'.`);
-    }
-}
-
-
+import executeDownload from './execute-download';
 
 interface ReactTextSelectionUIProps {
     settings: BibleChapterDownloaderSettings,
@@ -103,7 +67,7 @@ export default function TextSelectionUI(props: ReactTextSelectionUIProps) {
             <button
                 onClick={() => {
                     const currBook = GetBookData().find(x => x.id === bookId);
-                    callbackFunc(
+                    executeDownload(
                         {
                             bookId: Number.parseInt(bookId),
                             bookAbbreviation: currBook!.abbreviation,
