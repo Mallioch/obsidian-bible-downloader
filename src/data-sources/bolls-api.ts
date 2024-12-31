@@ -1,24 +1,22 @@
 import DataSource from "./data-source"
 import ApiDataObject from "src/api-data-object";
+import { DataFetchResult } from "src/data-fetcher";
 
 export default class BollsApi implements DataSource {
 
-    sourceIdentifier = "Bolls";
+    sourceIdentifier = "Bolls API";
 
-
-    public async getESVBookFromBolls(bookId: number, chapterNumber: number) {
+    public async getESVBookFromBolls(bookId: number, chapterNumber: number): Promise<DataFetchResult> {
 		const url = 'https://bolls.life/get-chapter/ESV/' + bookId + '/' + chapterNumber.toString() + '/';
     	const response = await fetch(url);
 
 		const data: Array<ApiDataObject> = await response.json();
 
-		let contents = '';
-		data.forEach((v: ApiDataObject) => {
-			contents += '###### ' + v.verse + '\n';
-			contents += v.text.trim() + '\n';
-		});
-
-		return contents;
+		return {
+			content: data.map(x => { return { verseIdentifier: x.verse, text: x.text.trim() } }),
+			source: this.sourceIdentifier,
+			httpStatusCode: response.status
+		}
 	}
 
 }

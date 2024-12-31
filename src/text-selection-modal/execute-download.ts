@@ -1,5 +1,5 @@
 import { App, Notice } from 'obsidian';
-import { DataFetcher } from '../data-fetcher';
+import DataFetcher, { DataFetchResult, Verse } from '../data-fetcher';
 import { BibleChapterDownloaderSettings } from '../settings/bible-chapter-downloader-settings';
 
 export interface TextSelectionResult {
@@ -9,17 +9,31 @@ export interface TextSelectionResult {
 	translation: string
 }
 
-function createHeader(translation: string) {
+function createHeader(translation: string, source: string) {
     const now = new Date();
     return `---
 bible-version: ${translation}
 date-downloaded: ${now.toISOString()}
+source: ${source}
 ---
 `;
 }
 
+function formatContentsToMarkdown(translation: string, apiResult: DataFetchResult) {
+    const header = createHeader(translation, apiResult.source);
+
+    let contents = '';
+    apiResult.content.forEach((v: Verse) => {
+        contents += '###### ' + v.verseIdentifier + '\n';
+        contents += v.text.trim() + '\n';
+    });
+
+    return header + contents;
+}
+
 async function executeDownload (a: TextSelectionResult, settings: BibleChapterDownloaderSettings, app: App) {
-    const fileContents = createHeader(a.translation) + await DataFetcher.getBook(a.translation, a.bookId, a.chapterNumber)
+    const apiResult = await DataFetcher.getBook(a.translation, a.bookId, a.chapterNumber)
+    const fileContents = formatContentsToMarkdown(a.translation, apiResult);
 
     const folderPath = `${settings.fileLocation}/${a.translation}/${a.bookAbbreviation}`;	
     const folderExists = await app.vault.adapter.exists(folderPath);

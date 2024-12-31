@@ -1,12 +1,13 @@
 import GetBookData from 'src/book-data';
 import DataSource from './data-source';
 import ApiDataObject from 'src/api-data-object';
+import { DataFetchResult } from 'src/data-fetcher';
 
 export default class NetBibleApi implements DataSource {
 
-    sourceIdentifier = "NET";
+    sourceIdentifier = "Offical NET Bible API";
 
-    public async getNETBook(bookId: number, chapterNumber: number) {
+    public async getNETBook(bookId: number, chapterNumber: number) : Promise<DataFetchResult> {
 
 		const bookData = GetBookData();
 		const book = bookData.find(x => x.id === bookId.toString());
@@ -16,12 +17,10 @@ export default class NetBibleApi implements DataSource {
 
 		const data: Array<ApiDataObject> = await response.json();
 
-		let contents = '';
-		data.forEach((v: ApiDataObject) => {
-			contents += '###### ' + v.verse + '\n';
-			contents += v.text.trim() + '\n';
-		});
-
-		return contents;
+		return {
+			content: data.map(x => { return { verseIdentifier: x.verse, text: x.text.trim() } }),
+			source: this.sourceIdentifier,
+			httpStatusCode: response.status
+		}
 	}
 }
